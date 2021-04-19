@@ -122,7 +122,7 @@ where
         .push_tcp_endpoint()
         .push_tcp_logical(resolve.clone())
         .into_stack()
-        .check_new_service::<Logical<()>, _>()
+        .check_new_clone::<Logical<()>>()
         .push_request_filter(
             |(p, _): (Option<profiles::Receiver>, _)| -> Result<_, Error> {
                 let profile = p.ok_or_else(discovery_rejected)?;
@@ -136,7 +136,7 @@ where
                     protocol: (),
                     logical_addr,
                 })
-            },
+            } as fn(_) -> _,
         )
         .push(profiles::discover::layer(profiles.clone(), {
             let allow = allow_discovery.clone();
@@ -148,6 +148,7 @@ where
                 }
             }
         }))
+        .check_new_clone::<NameAddr>()
         .push_on_response(
             svc::layers()
                 .push(
